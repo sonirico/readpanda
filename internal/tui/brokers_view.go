@@ -63,7 +63,7 @@ func brokersColumns(width int) []table.Column {
 }
 
 func (v *BrokersView) Init() tea.Cmd {
-	return tea.Batch(v.load(), v.tick())
+	return v.load()
 }
 
 func (v *BrokersView) Update(msg tea.Msg) tea.Cmd {
@@ -80,7 +80,7 @@ func (v *BrokersView) Update(msg tea.Msg) tea.Cmd {
 		if v.app.current != viewBrokers || v.errored {
 			return nil
 		}
-		return tea.Batch(v.load(), v.tick())
+		return v.load()
 	case tea.KeyMsg:
 		if m.String() == "r" {
 			v.errored = false

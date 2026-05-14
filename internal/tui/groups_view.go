@@ -62,7 +62,7 @@ func groupsColumns(width int) []table.Column {
 }
 
 func (v *GroupsView) Init() tea.Cmd {
-	return tea.Batch(v.load(), v.tick())
+	return v.load()
 }
 
 func (v *GroupsView) Update(msg tea.Msg) tea.Cmd {
@@ -80,7 +80,7 @@ func (v *GroupsView) Update(msg tea.Msg) tea.Cmd {
 		if v.app.current != viewGroups || v.errored {
 			return nil
 		}
-		return tea.Batch(v.load(), v.tick())
+		return v.load()
 	case tea.KeyMsg:
 		if consumed, applied := v.filter.Handle(m); consumed {
 			if applied {

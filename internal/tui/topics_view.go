@@ -68,7 +68,7 @@ func topicsColumns(width int) []table.Column {
 }
 
 func (v *TopicsView) Init() tea.Cmd {
-	return tea.Batch(v.load(), v.tick())
+	return v.load()
 }
 
 func (v *TopicsView) Update(msg tea.Msg) tea.Cmd {
@@ -90,7 +90,7 @@ func (v *TopicsView) Update(msg tea.Msg) tea.Cmd {
 		if v.app.current != viewTopics || v.errored {
 			return nil
 		}
-		return tea.Batch(v.load(), v.tick())
+		return v.load()
 	case tea.KeyMsg:
 		if consumed, applied := v.filter.Handle(m); consumed {
 			if applied {
