@@ -163,35 +163,61 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) View() string {
-	body := ""
-	switch a.current {
-	case viewTopics:
-		body = a.topics.View()
-	case viewGroups:
-		body = a.groups.View()
-	case viewContexts:
-		body = a.contexts.View()
-	case viewHelp:
-		body = a.help.View()
-	case viewTopicDetail:
-		body = a.topicDetail.View()
-	case viewBrokers:
-		body = a.brokers.View()
+	w := a.width
+	if w < 1 {
+		w = 80
 	}
+	contentW := w - 4
+	region := a.bodyHeight()
 
-	header := a.renderHeader()
-	footer := a.renderFooter()
-	// Pad the body so the footer always sits at the bottom of the alt screen.
-	if a.height > 0 {
-		body = padToHeight(body, a.bodyHeight())
-	}
-	return lipgloss.JoinVertical(lipgloss.Left, header, body, footer)
+	body := panel(a.viewTitle(), fitHeight(a.viewBody(), region-2), contentW)
+	header := panel("", a.renderHeader(), contentW)
+	footer := panel("", a.renderFooter(), contentW)
+	return lipgloss.JoinVertical(lipgloss.Left, header, body, footer) + "\x1b[0m"
 }
 
-// bodyHeight returns the number of rows available for the active view's body
-// (everything between the 1-line header and 1-line footer).
+// viewBody returns the current view's rendered content (unframed).
+func (a *App) viewBody() string {
+	switch a.current {
+	case viewTopics:
+		return a.topics.View()
+	case viewGroups:
+		return a.groups.View()
+	case viewContexts:
+		return a.contexts.View()
+	case viewHelp:
+		return a.help.View()
+	case viewTopicDetail:
+		return a.topicDetail.View()
+	case viewBrokers:
+		return a.brokers.View()
+	}
+	return ""
+}
+
+// viewTitle returns the panel border title for the active view.
+func (a *App) viewTitle() string {
+	switch a.current {
+	case viewTopics:
+		return a.topics.Title()
+	case viewGroups:
+		return a.groups.Title()
+	case viewContexts:
+		return a.contexts.Title()
+	case viewHelp:
+		return a.help.Title()
+	case viewTopicDetail:
+		return a.topicDetail.Title()
+	case viewBrokers:
+		return a.brokers.Title()
+	}
+	return ""
+}
+
+// bodyHeight is the height of the region between the header and footer panels,
+// which take 3 rows each (one content line plus top/bottom border).
 func (a *App) bodyHeight() int {
-	h := a.height - 2
+	h := a.height - 6
 	if h < 1 {
 		return 1
 	}
@@ -199,21 +225,15 @@ func (a *App) bodyHeight() int {
 }
 
 func (a *App) resizeViews() {
-	w, h := a.width, a.bodyHeight()
-	a.topics.SetSize(w, h)
-	a.groups.SetSize(w, h)
-	a.contexts.SetSize(w, h)
-	a.help.SetSize(w, h)
-	a.topicDetail.SetSize(w, h)
-	a.brokers.SetSize(w, h)
-}
-
-func padToHeight(s string, h int) string {
-	lines := strings.Count(s, "\n") + 1
-	if lines >= h {
-		return s
-	}
-	return s + strings.Repeat("\n", h-lines)
+	w, region := a.width, a.bodyHeight()
+	// Framed views render inside a panel: content is w-4 wide and region-2 tall.
+	innerW, innerH := w-4, region-2
+	a.topics.SetSize(innerW, innerH)
+	a.groups.SetSize(innerW, innerH)
+	a.contexts.SetSize(innerW, innerH)
+	a.help.SetSize(innerW, innerH)
+	a.topicDetail.SetSize(innerW, innerH)
+	a.brokers.SetSize(innerW, innerH)
 }
 
 func (a *App) handleKey(k tea.KeyMsg) (tea.Cmd, bool) {
@@ -341,14 +361,14 @@ func (a *App) renderHeader() string {
 	title := a.styles.Title.Render("readpanda")
 	prof := fmt.Sprintf("profile=%s", a.prof.Name)
 	if len(a.prof.Brokers) > 0 {
-		prof += " · " + a.prof.Brokers[0]
+		prof += "  " + a.prof.Brokers[0]
 		if len(a.prof.Brokers) > 1 {
 			prof += fmt.Sprintf(" (+%d)", len(a.prof.Brokers)-1)
 		}
 	}
-	status := a.styles.StatusOK.Render("● connected")
+	status := a.styles.StatusOK.Render("o connected")
 	if !a.connected {
-		status = a.styles.StatusErr.Render("● error")
+		status = a.styles.StatusErr.Render("x error")
 	}
 	view := a.styles.HeaderKey.Render(viewName(a.current))
 	left := a.styles.Header.Render(title + "  " + view)
@@ -364,9 +384,9 @@ func (a *App) renderFooter() string {
 		return a.styles.Error.Render("err: " + a.lastErr.Error())
 	}
 	keys := []string{
-		": command", "/ filter", "? help", "↵ select", "esc back", "r refresh", "q quit",
+		": command", "/ filter", "? help", "enter select", "esc back", "r refresh", "q quit",
 	}
-	return a.styles.Footer.Render(strings.Join(keys, " · "))
+	return a.styles.Footer.Render(strings.Join(keys, "  "))
 }
 
 func viewName(v viewID) string {

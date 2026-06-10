@@ -63,14 +63,21 @@ func newTopicDetailView(app *App) *TopicDetailView {
 	}
 }
 
+func (v *TopicDetailView) Title() string {
+	if v.target == "" {
+		return "Topic"
+	}
+	return v.target
+}
+
 func (v *TopicDetailView) SetSize(w, h int) {
 	v.w, v.h = w, h
 	if w > 0 {
 		v.viewport.Width = w
 	}
-	// Reserve rows for chrome: title (1) + tabs (1) + rule (1) + summary (1)
-	// + rule (1) = 5.
-	body := h - 5
+	// Reserve rows for chrome: tabs (1) + rule (1) + summary (1) + rule (1) = 4.
+	// Title is now in the panel border.
+	body := h - 4
 	if body < 3 {
 		body = 3
 	}
@@ -159,21 +166,13 @@ func (v *TopicDetailView) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (v *TopicDetailView) View() string {
-	title := lipgloss.NewStyle().Bold(true).Foreground(colorPrimary).Render(v.target)
-	if v.detail.Internal {
-		title += lipgloss.NewStyle().
-			Foreground(colorMuted).
-			Render("  (internal)")
-	}
 	width := v.w
 	if width < 1 {
 		width = 1
 	}
-	rule := lipgloss.NewStyle().Foreground(colorBorder).
-		Render(strings.Repeat("─", width))
-
-	out := title + "\n" +
-		v.renderTabs() + "\n" +
+	rule := renderRule(width)
+	tabLabels := []string{"1 Messages", "2 Consumers", "3 Partitions", "4 Configuration", "5 ACL"}
+	out := renderTabBar(int(v.tab), tabLabels) + "\n" +
 		rule + "\n" +
 		v.renderSummaryLine() + "\n" +
 		rule + "\n"
@@ -182,10 +181,6 @@ func (v *TopicDetailView) View() string {
 	} else {
 		out += v.viewport.View()
 	}
-	// Defensive ANSI reset: lipgloss-rendered backgrounds (the active tab
-	// pill) can leak into terminal cells that bubbletea's diff renderer
-	// later updates with un-styled text. A trailing reset closes any pending
-	// SGR state.
 	return out + "\x1b[0m"
 }
 
@@ -193,27 +188,6 @@ func (v *TopicDetailView) View() string {
 // embedded tail consumer doesn't keep polling in the background.
 func (v *TopicDetailView) Stop() {
 	v.tail.stop()
-}
-
-func (v *TopicDetailView) renderTabs() string {
-	active := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(colorSelFG).
-		Background(colorPrimary).
-		Padding(0, 1)
-	inactive := lipgloss.NewStyle().
-		Foreground(colorMuted).
-		Padding(0, 1)
-	labels := []string{"1 Messages", "2 Consumers", "3 Partitions", "4 Configuration", "5 ACL"}
-	parts := make([]string, len(labels))
-	for i, l := range labels {
-		if detailTab(i) == v.tab {
-			parts[i] = active.Render(l)
-		} else {
-			parts[i] = inactive.Render(l)
-		}
-	}
-	return strings.Join(parts, "")
 }
 
 // renderSummaryLine is the compact summary the user used to see in tab 1.
@@ -238,7 +212,7 @@ func (v *TopicDetailView) renderSummaryLine() string {
 		parts = append(parts, "cleanup="+d.CleanupPolicy)
 	}
 	parts = append(parts, "retention="+humanRetentionMs(d.RetentionMs))
-	return muted.Render("  " + strings.Join(parts, " · "))
+	return muted.Render("  " + strings.Join(parts, "  "))
 }
 
 func (v *TopicDetailView) setTab(t detailTab) tea.Cmd {

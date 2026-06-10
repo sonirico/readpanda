@@ -61,6 +61,14 @@ func contextsColumns(width int) []table.Column {
 	}
 }
 
+func (v *ContextsView) Title() string {
+	f := v.app.cfg.ProfileFile
+	if f != nil && len(f.Profiles) > 0 {
+		return fmt.Sprintf("Contexts (%d)", len(f.Profiles))
+	}
+	return "Contexts"
+}
+
 func (v *ContextsView) Init() tea.Cmd {
 	v.refresh()
 	return nil

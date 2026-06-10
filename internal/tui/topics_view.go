@@ -67,6 +67,19 @@ func topicsColumns(width int) []table.Column {
 	}
 }
 
+func (v *TopicsView) Title() string {
+	n := 0
+	for _, r := range v.rows {
+		if r.isLeaf {
+			n++
+		}
+	}
+	if n > 0 {
+		return fmt.Sprintf("Topics (%d)", n)
+	}
+	return "Topics"
+}
+
 func (v *TopicsView) Init() tea.Cmd {
 	return v.load()
 }
@@ -135,7 +148,7 @@ func (v *TopicsView) View() string {
 		if v.filter.query != "" {
 			return "\n  no topics match \"" + v.filter.query + "\"\n"
 		}
-		return "\n  loading topics…\n"
+		return "\n  loading topics...\n"
 	}
 	if bar := v.filter.Bar(); bar != "" {
 		return bar + "\n" + v.table.View()
@@ -192,7 +205,7 @@ func treeRows(nodes []*topicNode, t *topicTree) []table.Row {
 		if n.isLeaf {
 			internal := ""
 			if n.info.Internal {
-				internal = "✓"
+				internal = "*"
 			}
 			rows = append(rows, table.Row{
 				label,

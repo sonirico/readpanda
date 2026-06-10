@@ -61,6 +61,13 @@ func groupsColumns(width int) []table.Column {
 	}
 }
 
+func (v *GroupsView) Title() string {
+	if len(v.groups) > 0 {
+		return fmt.Sprintf("Groups (%d)", len(v.groups))
+	}
+	return "Groups"
+}
+
 func (v *GroupsView) Init() tea.Cmd {
 	return v.load()
 }
@@ -101,7 +108,7 @@ func (v *GroupsView) Update(msg tea.Msg) tea.Cmd {
 
 func (v *GroupsView) View() string {
 	if len(v.groups) == 0 {
-		return "\n  no consumer groups (or still loading)…\n"
+		return "\n  no consumer groups (or still loading)...\n"
 	}
 	if bar := v.filter.Bar(); bar != "" {
 		return bar + "\n" + v.table.View()

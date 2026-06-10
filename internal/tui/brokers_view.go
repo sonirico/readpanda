@@ -62,6 +62,13 @@ func brokersColumns(width int) []table.Column {
 	}
 }
 
+func (v *BrokersView) Title() string {
+	if len(v.brokers) > 0 {
+		return fmt.Sprintf("Brokers (%d)", len(v.brokers))
+	}
+	return "Brokers"
+}
+
 func (v *BrokersView) Init() tea.Cmd {
 	return v.load()
 }
@@ -94,7 +101,7 @@ func (v *BrokersView) Update(msg tea.Msg) tea.Cmd {
 
 func (v *BrokersView) View() string {
 	if len(v.brokers) == 0 {
-		return "\n  loading brokers…\n"
+		return "\n  loading brokers...\n"
 	}
 	return v.table.View()
 }
@@ -121,15 +128,15 @@ func brokersToRows(bs []rp.BrokerInfo) []table.Row {
 	for _, b := range bs {
 		controller := ""
 		if b.IsController {
-			controller = "✓"
+			controller = "*"
 		}
-		size := "—"
+		size := "-"
 		if b.LogDirSize > 0 {
 			size = humanBytes(b.LogDirSize)
 		}
 		rack := b.Rack
 		if rack == "" {
-			rack = "—"
+			rack = "-"
 		}
 		rows = append(rows, table.Row{
 			fmt.Sprintf("%d", b.NodeID),

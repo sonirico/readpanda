@@ -29,6 +29,8 @@ func (v *HelpView) SetSize(w, h int) {
 	}
 }
 
+func (v *HelpView) Title() string { return "Help" }
+
 func (v *HelpView) Init() tea.Cmd { return nil }
 
 func (v *HelpView) Update(msg tea.Msg) tea.Cmd {
@@ -52,13 +54,13 @@ func helpContent() string {
 	}
 
 	var b strings.Builder
-	b.WriteString(bold.Render("readpanda — keymap"))
+	b.WriteString(bold.Render("readpanda - keymap"))
 	b.WriteString("\n")
 
 	b.WriteString(section("Navigation"))
 	b.WriteString(row(":", "open command bar"))
 	b.WriteString(row("/", "filter rows (esc to clear, enter to keep)"))
-	b.WriteString(row("↑/k ↓/j", "move cursor"))
+	b.WriteString(row("up/k dn/j", "move cursor"))
 	b.WriteString(row("enter", "drill into selected row"))
 	b.WriteString(row("esc", "back to previous view"))
 	b.WriteString(row("r", "refresh current view"))
@@ -74,7 +76,7 @@ func helpContent() string {
 	b.WriteString(row("quit, q", "quit"))
 
 	b.WriteString(section("Topics tree"))
-	b.WriteString(row("enter", "expand/collapse branch · open topic"))
+	b.WriteString(row("enter", "expand/collapse branch; enter to open topic"))
 	b.WriteString(row("o", "expand all"))
 	b.WriteString(row("O", "collapse all"))
 
