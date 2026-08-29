@@ -5,27 +5,55 @@ with Avro / JSON-SR / Protobuf decoded inline.
 
 Built because the Redpanda Cloud console eats my laptop.
 
-## What it does
+![demo](docs/gifs/demo.gif)
 
-- Topics tree (collapsible, grouped by dot prefix), partitions, replication,
-  message count.
-- Topic detail with five tabs: live messages, consumer groups + lag,
-  partitions (with leader-distribution histogram), full config (non-defaults
-  first), ACL.
-- Live tail. Groupless consumer so it doesn't litter your cluster with empty
-  groups. Per record: size, compression, format hint, headers, key, value.
-  Decoders:
-    - Plain JSON / UTF-8 / hex preview.
-    - Confluent Avro via Schema Registry, decoded to JSON (hamba/avro).
-    - Confluent JSON-SR.
-    - Confluent Protobuf via Schema Registry, decoded to JSON. Runtime
-      `.proto` compile (bufbuild/protocompile), recursive SR reference
-      resolution, well-known types bundled, dynamicpb + protojson.
-- Consumer groups view with lag.
-- Brokers view.
-- rpk profile contexts. Switch clusters from inside the TUI with `:ctx`.
-- k9s feel: `:` for commands, `/` to filter, `?` for help, columns size with
-  the terminal, Redpanda palette.
+## Features
+
+### Topics tree
+Collapsible, grouped by dot prefix, with partitions, replication and message
+count.
+
+![tree](docs/gifs/tree.gif)
+
+### Live tail
+Groupless consumer so it doesn't litter your cluster with empty groups. Per
+record: size, compression, format hint, headers, key, value. Decoders:
+- Plain JSON / UTF-8 / hex preview.
+- Confluent Avro via Schema Registry, decoded to JSON (hamba/avro).
+- Confluent JSON-SR.
+- Confluent Protobuf via Schema Registry, decoded to JSON. Runtime `.proto`
+  compile (bufbuild/protocompile), recursive SR reference resolution,
+  well-known types bundled, dynamicpb + protojson.
+
+![tail](docs/gifs/tail.gif)
+
+### Consumer groups + lag
+Consumer groups view with lag.
+
+![groups](docs/gifs/groups.gif)
+
+### Partitions + config
+Partitions (with leader-distribution histogram), full config (non-defaults
+first), ACL.
+
+![partitions](docs/gifs/partitions.gif)
+
+### Brokers
+Brokers view.
+
+![brokers](docs/gifs/brokers.gif)
+
+## Try it in 2 minutes
+
+Needs Docker.
+
+```
+just demo-up
+# in another terminal
+just demo-traffic
+go run ./cmd/readpanda --brokers localhost:19092 --sr-url http://localhost:18081
+just demo-down
+```
 
 ## Install
 
@@ -95,22 +123,6 @@ Topic detail tabs: `1` messages, `2` consumers, `3` partitions, `4` config,
 
 Tail tab: `p` pause/resume, `c` clear buffer.
 
-## Layout
-
-```
-cmd/readpanda/   binary
-pkg/rp/          franz-go client + Schema Registry (importable lib)
-internal/
-  profile/       rpk.yaml parser
-  tui/           bubbletea views, format/proto decoders
-```
-
-`pkg/rp` is a regular library you can import on its own:
-
-```go
-import "github.com/sonirico/readpanda/pkg/rp"
-```
-
 ## Go version
 
 `.gvmrc` pins Go to `go1.26.3`. To auto-switch on `cd`, add this to your
@@ -176,3 +188,20 @@ Read-only. No produce, no topic creation, no ACL editing yet.
 ### Performance and robustness
 - Tail backpressure with a real ring buffer and drop counter.
 - Automatic consumer reconnection on broker drop.
+
+## Layout
+
+```
+cmd/readpanda/   binary
+pkg/rp/          franz-go client + Schema Registry (importable lib)
+internal/
+  profile/       rpk.yaml parser
+  tui/           bubbletea views, format/proto decoders
+demo/            docker-compose, seed script, traffic generator, vhs tapes
+```
+
+`pkg/rp` is a regular library you can import on its own:
+
+```go
+import "github.com/sonirico/readpanda/pkg/rp"
+```
