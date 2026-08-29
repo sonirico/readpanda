@@ -51,3 +51,23 @@ tidy:
 
 clean:
     rm -rf bin/
+
+demo-up:
+    docker compose -f demo/docker-compose.yml up -d
+    demo/seed.sh
+
+demo-traffic:
+    go run ./demo/traffic
+
+demo-down:
+    docker compose -f demo/docker-compose.yml down -v
+
+# Requires vhs installed, and `just demo-up` plus `just demo-traffic`
+# running in another terminal.
+gifs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for tape in demo/tapes/*.tape; do
+        [ -e "$tape" ] || continue
+        vhs "$tape"
+    done
